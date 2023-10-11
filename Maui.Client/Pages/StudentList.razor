@@ -1,0 +1,101 @@
+﻿@page "/students"
+@inject HttpClient http
+@inject IJSRuntime jsRuntime
+@inject NavigationManager manager
+@using System.Net.Http.Json
+
+<h3>Student Details</h3>
+<div class="col-md-4">
+    <div class="form-group">
+        <a class="btn btn-outline-success btn-sm" href="students/create">Add New Student</a>
+    </div>
+    @if (students == null)
+    {
+        <div>Please wait a moment.....</div>
+    }
+    else if (students.Count == 0)
+    {
+        <text>There is no Student record.... </text>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+
+                    <th>Id</th>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Admission Date</th>
+                    <th>Active</th>
+                    <th>Address</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in students)
+                {
+                    <tr>
+
+                        <td>@student.Id</td>
+                        <td><img height="80px" width="80px" src="@student.ImageUrl" /></td>
+                        <td>@student.Name</td>
+                        <td>@student.AdmissionDate</td>
+                        <td>@student.IsActive</td>
+                        <td>
+                            @if (student.Addresses.Count > 0)
+                            {
+                                @foreach (var address in student.Addresses)
+                                {
+                                    <div>
+                                        <strong>Street:</strong> @address.Street<br />
+                                        <strong>City:</strong> @address.City
+                                    </div>
+                                    <br />
+                                }
+                            }
+                            else
+                            {
+                                <div>No addresses</div>
+                            }
+                        </td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-info" href="students/edit/@student.Id">Edit</a>|
+                            <button class="btn btn-sm btn-outline-danger" @onclick="async () => await Delete(student)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+
+
+
+@code {
+
+    private string _baseUrl = DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2:5169" : "http://localhost:5169";
+    List<Student> students { get; set; }
+    protected async override Task OnInitializedAsync()
+    {
+        students = await http.GetFromJsonAsync<List<Student>>($"{_baseUrl}/api/students");
+    }
+
+    private async Task Delete(Student student)
+    {
+        bool confirmed = await jsRuntime.InvokeAsync<bool>("confirm", "Are you sure, you want to delete this record?");
+        if (confirmed)
+        {
+            var response = await http.DeleteAsync($"{_baseUrl}/api/students/{student.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                students.Remove(student);
+            }
+            else
+            {
+
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+﻿@page "/students/create"
+@inject HttpClient http
+@inject NavigationManager manager
+@using System.Net.Http.Json
+
+
+<h3>Add New Student</h3>
+<div class="row">
+    <StudentsForm student="student" OnValidSubmit="OnValidSubmit"></StudentsForm>
+</div>
+@code {
+    private string _baseUrl = DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2:5169" : "http://localhost:5169";
+    Student student = new Student();
+    private async Task OnValidSubmit()
+    {
+        var response = await http.PostAsJsonAsync($"{_baseUrl}/api/students", student);
+        var body = await response.Content.ReadAsStringAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"The new student id is {body}");
+            manager.NavigateTo("students");
+        }
+        else
+        {
+            Console.WriteLine($"{body}");
+        }
+    }
+}

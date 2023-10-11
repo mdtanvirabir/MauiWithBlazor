@@ -1,0 +1,89 @@
+﻿<EditForm Model="student" OnValidSubmit="OnValidSubmit">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <InputText class="form-control" id="name" @bind-Value="@student.Name" />
+                </div>
+                <div class="form-group">
+                    <label for="AdmissionDate">Admission Date</label>
+                    <InputDate class="form-control" id="AdmissionDate" @bind-Value="@student.AdmissionDate" />
+                </div>
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input" id="IsActive" @bind-Value="@student.IsActive" />
+                    <label for="isActive">Active?</label>
+                </div>
+
+                <div class="form-control-file my-2">
+                    @if (student.ImageUrl == null)
+                    {
+                        <img src="./css/noimage.png" height="80" width="80" />
+                    }
+                    else
+                    {
+                        <img src="@student.ImageUrl" height="80" width="80" />
+                    }                    
+                    <InputFile src="@student.ImageUrl" OnChange="OnFileChange" class="form-control" accept=".png, .jpg, .jepg" />
+                </div>
+                <div>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Sl.</th>
+                                <th>Street</th>
+                                <th>City</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < student.Addresses.Count; i++)
+                            {
+                                var index = i;
+                                var add = student.Addresses[i];
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td><InputText class="form-control" id="Street" @bind-Value="@add.Street" /></td>
+                                    <td>
+                                        <InputText class="form-control" id="City" @bind-Value="@add.City" />
+                                    </td>
+                                    <td>
+                                        <button @onclick="@(()=>student.Addresses.RemoveAt(index))" type="button" class="btn btn-outline-danger btn-sm">Remove</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                    <div class="form-group">
+                        <button @onclick="@(()=>student.Addresses.Add(new Address()))" type="button" class="btn btn-outline-secondary btn-sm">Add</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">Send</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="Clear">Clear</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</EditForm>
+@code {
+    [Parameter]
+    public Student student { get; set; }
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var format = "image/png";
+        var resizedImage = await e.File.RequestImageFileAsync(format, 1060, 1060);
+        var buffer = new byte[resizedImage.Size];
+        await resizedImage.OpenReadStream().ReadAsync(buffer);
+        student.ImageUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    private void Clear()
+    {
+        student = new Student();
+    }
+}

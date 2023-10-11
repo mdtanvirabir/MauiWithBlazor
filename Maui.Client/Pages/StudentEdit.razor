@@ -1,0 +1,51 @@
+﻿@page "/students/edit/{StudentId:int}"
+@inject HttpClient http
+@inject NavigationManager manager
+@using System.Text.Json
+@using System.Net.Http.Json
+
+<h3>Edit Student</h3>
+
+@if (student == null)
+{
+    <text>Loading....</text>
+}
+else
+{
+    <StudentsForm student="student" OnValidSubmit="OnValidSubmit"></StudentsForm>
+}
+@code {
+
+    private string _baseUrl = DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2:5169" : "http://localhost:5169";
+    [Parameter]
+    public int StudentId { get; set; }
+    private Student student;
+    protected async override Task OnInitializedAsync()
+    {
+        var response = await http.GetAsync($"{_baseUrl}/api/students/{StudentId}");
+        if (response.IsSuccessStatusCode)
+        {
+            student = JsonSerializer.Deserialize<Student>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+        }
+        else
+        {
+            manager.NavigateTo("students");
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        var response = await http.PutAsJsonAsync($"{_baseUrl}/api/students", student);
+        if (response.IsSuccessStatusCode)
+        {
+            manager.NavigateTo("students");
+        }
+        else
+        {
+            Console.WriteLine(await response.Content.ReadAsStringAsync());
+        }
+    }
+}
